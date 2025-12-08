@@ -45,7 +45,6 @@ export default async function MentorDashboard() {
             { name: "Hourly Rate", value: profile.hourlyRate },
             { name: "Department", value: profile.department },
             { name: "Subjects", value: profile.subjects },
-            { name: "Live Photo", value: profile.livePhotoUrl },
         ];
 
         const filledFields = fields.filter(f => f.value).length;

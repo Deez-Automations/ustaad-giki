@@ -34,9 +34,7 @@ export async function registerMentor(data: MentorRegistrationData) {
             return { error: "Hourly rate must be between PKR 500 and 1000" };
         }
 
-        if (!data.livePhotoData) {
-            return { error: "Live photo verification is required" };
-        }
+        // Note: Live photo verification removed - no longer required
 
         // Check if email already exists
         const existingUser = await prisma.user.findUnique({
