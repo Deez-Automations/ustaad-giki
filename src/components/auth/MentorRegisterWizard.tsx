@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Check, Camera, DollarSign, BookOpen, User } from "lucide-react";
+import { ArrowRight, ArrowLeft, Check, DollarSign, BookOpen, User } from "lucide-react";
 import { registerMentor } from "@/actions/mentor-register";
 import { GIKI_DEPARTMENTS, GIKI_COURSES_BY_DEPARTMENT, type GIKIDepartment } from "@/lib/giki-courses";
 
@@ -25,11 +25,8 @@ interface FormData {
     proficiencyLevel: string;
     acceptsSOS: boolean;
 
-    // Step 4: Bio
+    // Step 4: Bio (FINAL STEP)
     mentorBio: string;
-
-    // Step 5: Live Photo
-    livePhotoData: string;
 }
 
 const STEPS = [
@@ -37,7 +34,6 @@ const STEPS = [
     { id: 2, title: "Expertise", icon: BookOpen },
     { id: 3, title: "Rate & Level", icon: DollarSign },
     { id: 4, title: "Bio", icon: User },
-    { id: 5, title: "Verification", icon: Camera },
 ];
 
 const PROFICIENCY_LEVELS = ["Beginner", "Intermediate", "Expert"];
@@ -61,12 +57,7 @@ export default function MentorRegisterWizard() {
         proficiencyLevel: "Intermediate",
         acceptsSOS: true,
         mentorBio: "",
-        livePhotoData: "",
     });
-
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const streamRef = useRef<MediaStream | null>(null);
-    const [isCameraActive, setIsCameraActive] = useState(false);
 
     const updateFormData = (updates: Partial<FormData>) => {
         setFormData((prev) => ({ ...prev, ...updates }));
@@ -74,7 +65,7 @@ export default function MentorRegisterWizard() {
 
     const nextStep = () => {
         setError("");
-        if (currentStep < 5) setCurrentStep(currentStep + 1);
+        if (currentStep < 4) setCurrentStep(currentStep + 1);
     };
 
     const prevStep = () => {
@@ -82,45 +73,15 @@ export default function MentorRegisterWizard() {
         if (currentStep > 1) setCurrentStep(currentStep - 1);
     };
 
-    const startCamera = useCallback(async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                streamRef.current = stream;
-                setIsCameraActive(true);
-            }
-        } catch (err) {
-            setError("Camera access denied. Please enable camera permissions.");
-        }
-    }, []);
-
-    const capturePhoto = useCallback(() => {
-        if (videoRef.current) {
-            const canvas = document.createElement("canvas");
-            canvas.width = videoRef.current.videoWidth;
-            canvas.height = videoRef.current.videoHeight;
-            const ctx = canvas.getContext("2d");
-            if (ctx) {
-                ctx.drawImage(videoRef.current, 0, 0);
-                const photoData = canvas.toDataURL("image/jpeg");
-                updateFormData({ livePhotoData: photoData });
-
-                // Stop camera
-                if (streamRef.current) {
-                    streamRef.current.getTracks().forEach((track) => track.stop());
-                    setIsCameraActive(false);
-                }
-            }
-        }
-    }, []);
-
     const handleSubmit = async () => {
         setIsSubmitting(true);
         setError("");
 
         try {
-            const result = await registerMentor(formData);
+            const result = await registerMentor({
+                ...formData,
+                livePhotoData: "", // No live photo required anymore
+            });
 
             if (result.error) {
                 setError(result.error);
@@ -174,7 +135,7 @@ export default function MentorRegisterWizard() {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                             className="bg-giki-blue h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(currentStep / 5) * 100}%` }}
+                            style={{ width: `${(currentStep / 4) * 100}%` }}
                         />
                     </div>
                 </div>
@@ -388,7 +349,7 @@ export default function MentorRegisterWizard() {
                             </motion.div>
                         )}
 
-                        {/* Step 4: Bio */}
+                        {/* Step 4: Bio - FINAL STEP */}
                         {currentStep === 4 && (
                             <motion.div
                                 key="step4"
@@ -414,68 +375,11 @@ export default function MentorRegisterWizard() {
                                         {formData.mentorBio.length} / 500 characters
                                     </p>
                                 </div>
-                            </motion.div>
-                        )}
 
-                        {/* Step 5: Live Photo */}
-                        {currentStep === 5 && (
-                            <motion.div
-                                key="step5"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="space-y-4"
-                            >
-                                <h2 className="text-2xl font-bold text-giki-blue mb-4">Live Photo Verification</h2>
-
-                                <div className="flex flex-col items-center space-y-4">
-                                    {!formData.livePhotoData && !isCameraActive && (
-                                        <button
-                                            onClick={startCamera}
-                                            className="px-6 py-3 bg-giki-blue text-white rounded-lg font-medium hover:bg-opacity-90 transition-all flex items-center space-x-2"
-                                        >
-                                            <Camera className="w-5 h-5" />
-                                            <span>Start Camera</span>
-                                        </button>
-                                    )}
-
-                                    {isCameraActive && (
-                                        <div className="relative">
-                                            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                                            <video
-                                                ref={videoRef}
-                                                autoPlay
-                                                className="w-full max-w-md rounded-lg border-4 border-giki-blue"
-                                            />
-                                            <button
-                                                onClick={capturePhoto}
-                                                className="mt-4 w-full px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all flex items-center justify-center space-x-2"
-                                            >
-                                                <Camera className="w-5 h-5" />
-                                                <span>Capture Photo</span>
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {formData.livePhotoData && (
-                                        <div className="relative">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
-                                                src={formData.livePhotoData}
-                                                alt="Live photo"
-                                                className="w-full max-w-md rounded-lg border-4 border-green-500"
-                                            />
-                                            <button
-                                                onClick={() => {
-                                                    updateFormData({ livePhotoData: "" });
-                                                    startCamera();
-                                                }}
-                                                className="mt-4 w-full px-6 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-all"
-                                            >
-                                                Retake Photo
-                                            </button>
-                                        </div>
-                                    )}
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                    <p className="text-sm text-green-800">
+                                        ✅ Click <strong>&quot;Complete Registration&quot;</strong> to become a mentor!
+                                    </p>
                                 </div>
                             </motion.div>
                         )}
@@ -500,7 +404,7 @@ export default function MentorRegisterWizard() {
                             </button>
                         )}
 
-                        {currentStep < 5 ? (
+                        {currentStep < 4 ? (
                             <button
                                 onClick={nextStep}
                                 className="ml-auto px-6 py-3 bg-giki-blue text-white rounded-lg font-medium hover:bg-opacity-90 transition-all flex items-center space-x-2"
@@ -511,7 +415,7 @@ export default function MentorRegisterWizard() {
                         ) : (
                             <button
                                 onClick={handleSubmit}
-                                disabled={isSubmitting || !formData.livePhotoData}
+                                disabled={isSubmitting}
                                 className="ml-auto px-8 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                             >
                                 {isSubmitting ? (

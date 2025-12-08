@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-    Camera, Check, ChevronRight, Loader2, User, GraduationCap,
-    Upload, Shield, BookOpen
+    Check, ChevronRight, Loader2, User, GraduationCap,
+    Shield, BookOpen
 } from "lucide-react";
-import Webcam from "react-webcam";
 import { registerUser } from "@/actions/register";
 import { useRouter } from "next/navigation";
 import { GIKI_DEPARTMENTS, GIKI_COURSES_BY_DEPARTMENT, type GIKIDepartment } from "@/lib/giki-courses";
@@ -29,18 +28,13 @@ interface FormData {
     // Step 3: Courses
     courses: string[];
 
-    // Step 4: Verification
+    // Step 4: Verification (CNIC only - no live photo)
     cnic: string;
-
-    // Step 5: Live Photo
-    livePhotoUrl: string;
 }
 
 export default function StudentRegisterWizard() {
     const router = useRouter();
-    const webcamRef = useRef<Webcam>(null);
     const [step, setStep] = useState(1);
-    const [isCameraActive, setIsCameraActive] = useState(false);
     const [formData, setFormData] = useState<FormData>({
         name: "",
         email: "",
@@ -51,7 +45,6 @@ export default function StudentRegisterWizard() {
         department: "",
         courses: [],
         cnic: "",
-        livePhotoUrl: "",
     });
 
     const [error, setError] = useState("");
@@ -94,11 +87,15 @@ export default function StudentRegisterWizard() {
             }
         }
 
+        // Step 4 is the last step - submit on validation pass
         if (step === 4) {
             if (formData.cnic.length !== 13) {
                 setError("CNIC must be exactly 13 digits (no dashes)");
                 return;
             }
+            // CNIC is valid, submit the form
+            await handleSubmit();
+            return;
         }
 
         setStep((s) => s + 1);
@@ -114,26 +111,14 @@ export default function StudentRegisterWizard() {
         }
     };
 
-    const capturePhoto = () => {
-        if (webcamRef.current) {
-            const photoData = webcamRef.current.getScreenshot();
-            if (photoData) {
-                updateFormData({ livePhotoUrl: photoData });
-                setIsCameraActive(false);
-            }
-        }
-    };
-
     const handleSubmit = async () => {
-        if (!formData.livePhotoUrl) {
-            setError("Please capture your photo for verification");
-            return;
-        }
-
         setIsSubmitting(true);
         setError("");
 
-        const result = await registerUser(formData);
+        const result = await registerUser({
+            ...formData,
+            livePhotoUrl: "", // No live photo required anymore
+        });
 
         if (result.error) {
             setError(result.error);
@@ -143,7 +128,7 @@ export default function StudentRegisterWizard() {
         }
     };
 
-    const progress = (step / 5) * 100;
+    const progress = (step / 4) * 100;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
@@ -165,7 +150,7 @@ export default function StudentRegisterWizard() {
                 {/* Header */}
                 <div className="p-8 bg-gradient-to-r from-giki-blue to-blue-700 text-white">
                     <h2 className="text-3xl font-black mb-2">Join USTAAD GIKI</h2>
-                    <p className="text-blue-100">Step {step} of 5</p>
+                    <p className="text-blue-100">Step {step} of 4</p>
                 </div>
 
                 {/* Content */}
@@ -341,7 +326,7 @@ export default function StudentRegisterWizard() {
                         </motion.div>
                     )}
 
-                    {/* Step 4: CNIC Verification */}
+                    {/* Step 4: CNIC Verification - FINAL STEP */}
                     {step === 4 && (
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
@@ -372,90 +357,11 @@ export default function StudentRegisterWizard() {
                                 </p>
                             </div>
 
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                <p className="text-sm text-yellow-800">
-                                    🔒 <strong>Security:</strong> Your CNIC is used for identity verification and will be kept secure.
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <p className="text-sm text-green-800">
+                                    ✅ After entering your CNIC, click <strong>&quot;Complete Registration&quot;</strong> to finish!
                                 </p>
                             </div>
-                        </motion.div>
-                    )}
-
-                    {/* Step 5: Live Photo */}
-                    {step === 5 && (
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="space-y-6"
-                        >
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                                    <Camera className="w-6 h-6 text-red-600" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-gray-800">Live Photo Verification</h3>
-                            </div>
-
-                            <div className="relative w-full h-80 bg-black rounded-2xl overflow-hidden border-4 border-giki-gold">
-                                {!formData.livePhotoUrl && !isCameraActive && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                                        <p className="text-white text-center">
-                                            Click "Start Camera" to capture your photo
-                                        </p>
-                                    </div>
-                                )}
-
-                                {isCameraActive && !formData.livePhotoUrl && (
-                                    <Webcam
-                                        ref={webcamRef}
-                                        audio={false}
-                                        screenshotFormat="image/jpeg"
-                                        className="w-full h-full object-cover"
-                                    />
-                                )}
-
-                                {formData.livePhotoUrl && (
-                                    <img
-                                        src={formData.livePhotoUrl}
-                                        alt="Captured"
-                                        className="w-full h-full object-cover"
-                                    />
-                                )}
-                            </div>
-
-                            {!formData.livePhotoUrl && !isCameraActive && (
-                                <button
-                                    onClick={() => setIsCameraActive(true)}
-                                    className="w-full py-4 bg-gradient-to-r from-giki-blue to-blue-700 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                                >
-                                    <Camera className="w-5 h-5" />
-                                    Start Camera
-                                </button>
-                            )}
-
-                            {isCameraActive && !formData.livePhotoUrl && (
-                                <button
-                                    onClick={capturePhoto}
-                                    className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                                >
-                                    <Camera className="w-5 h-5" />
-                                    Capture Photo
-                                </button>
-                            )}
-
-                            {formData.livePhotoUrl && (
-                                <button
-                                    onClick={() => {
-                                        updateFormData({ livePhotoUrl: "" });
-                                        setIsCameraActive(true);
-                                    }}
-                                    className="text-sm text-red-600 hover:underline"
-                                >
-                                    Retake Photo
-                                </button>
-                            )}
-
-                            <p className="text-xs text-gray-500 text-center">
-                                This photo will be used to verify your identity against your GIKI ID card
-                            </p>
                         </motion.div>
                     )}
 
@@ -470,7 +376,7 @@ export default function StudentRegisterWizard() {
                             </button>
                         )}
 
-                        {step < 5 ? (
+                        {step < 4 ? (
                             <button
                                 onClick={nextStep}
                                 className="ml-auto px-8 py-3 bg-gradient-to-r from-giki-blue to-blue-700 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center gap-2"
@@ -480,8 +386,8 @@ export default function StudentRegisterWizard() {
                             </button>
                         ) : (
                             <button
-                                onClick={handleSubmit}
-                                disabled={isSubmitting || !formData.livePhotoUrl}
+                                onClick={nextStep}
+                                disabled={isSubmitting || formData.cnic.length !== 13}
                                 className="ml-auto px-8 py-3 bg-gradient-to-r from-giki-gold to-yellow-600 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? (
