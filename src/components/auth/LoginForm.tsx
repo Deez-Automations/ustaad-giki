@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
@@ -28,7 +28,16 @@ export default function LoginForm() {
                 setError("Invalid email or password");
                 setIsLoading(false);
             } else {
-                router.push("/student"); // Default redirect
+                // Fetch the session to determine user role
+                const sessionRes = await fetch("/api/auth/session");
+                const session = await sessionRes.json();
+
+                // Redirect based on role
+                if (session?.user?.role === "MENTOR") {
+                    router.push("/mentor");
+                } else {
+                    router.push("/student");
+                }
                 router.refresh();
             }
         } catch (err) {
