@@ -1,0 +1,352 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationType {
+  BOOKING_REQUEST
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  SOS_ALERT
+  REVIEW_RECEIVED
+  SYSTEM
+}
+
+// ============================================
+// CORE: USER & PROFILE
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  role          Role      @default(STUDENT)
+  isOnline      Boolean   @default(false)
+  lastSeenAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  profile              Profile?
+  timeSlots            TimeSlot[]
+  mentorReviews        Review[]           @relation("MentorReviews")
+  studentReviews       Review[]           @relation("StudentReviews")
+  createdSOSAlerts     SOSAlert[]         @relation("StudentAlerts")
+  acceptedSOSAlerts    SOSAlert[]         @relation("MentorAlerts")
+  bookingsAsStudent    Booking[]          @relation("StudentBookings")
+  bookingsAsMentor     Booking[]          @relation("MentorBookings")
+  mentorAvailability   MentorAvailability[]
+  preferences          Preference?
+  notifications        Notification[]
+  activityLogs         ActivityLog[]
+  
+  @@index([email])
+  @@index([role])
+}
+
+model Profile {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // GIKI Specifics
+  rollNumber    String    @unique
+  batch         String
+  faculty       String    // e.g., "FCS", "FEE"
+  department    String?   // GIKI Department
+  cnic          String    @unique
+  phoneNumber   String?   // Contact number
+  
+  // Verification
+  isVerified    Boolean   @default(false)
+  livePhotoUrl  String?   // URL to the webcam capture
+  
+  // Mentor-specific fields
+  isMentor          Boolean   @default(false)
+  mentorBio         String?
+  hourlyRate        Int?      // PKR per hour (500-1000)
+  subjects          String?   // JSON array of subjects
+  proficiencyLevel  String?   // "Beginner", "Intermediate", "Expert"
+  acceptsSOS        Boolean   @default(true)
+  totalEarnings     Float     @default(0)
+  rating            Float     @default(0)
+  reviewCount       Int       @default(0)
+  totalSessions     Int       @default(0)
+  isProfileComplete Boolean   @default(false)
+  
+  // Legacy field
+  bio           String?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([isMentor])
+  @@index([rating])
+}
+
+// ============================================
+// TIMETABLE
+// ============================================
+
+model TimeSlot {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  day       String   // "Monday", "Tuesday", etc.
+  startTime String   // "09:00"
+  endTime   String   // "10:30"
+  title     String   // Course code/name
+  location  String?  // Room number, Lab
+  color     String   @default("#3b82f6")
+  isClass   Boolean  @default(true) // true = class, false = personal event
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([day])
+}
+
+// ============================================
+// BOOKING & SESSIONS
+// ============================================
+
+model Booking {
+  id              String        @id @default(cuid())
+  studentId       String
+  mentorId        String
+  
+  // Session details
+  course          String        // Subject being taught
+  topic           String?       // Specific topic
+  scheduledDate   DateTime      // Date of session
+  startTime       String        // "14:00"
+  endTime         String        // "15:00"
+  duration        Int           // Minutes
+  
+  // Location
+  location        String?       // Physical location
+  isOnline        Boolean       @default(false)
+  meetingLink     String?       // For online sessions
+  
+  // Status
+  status          BookingStatus @default(PENDING)
+  cancelledById   String?       // Who cancelled
+  cancelReason    String?       // Why cancelled
+  
+  // Notes
+  studentNotes    String?       // Notes from student
+  mentorNotes     String?       // Notes from mentor
+  sessionSummary  String?       // Post-session summary
+  
+  // Pricing
+  totalAmount     Float         // Price in PKR
+  isPaid          Boolean       @default(false)
+  
+  // SOS Link
+  isSOS           Boolean       @default(false)
+  sosAlertId      String?       @unique
+  sosAlert        SOSAlert?     @relation(fields: [sosAlertId], references: [id])
+  
+  // Relations
+  student         User          @relation("StudentBookings", fields: [studentId], references: [id])
+  mentor          User          @relation("MentorBookings", fields: [mentorId], references: [id])
+  review          Review?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([studentId])
+  @@index([mentorId])
+  @@index([status])
+  @@index([scheduledDate])
+  @@index([course])
+}
+
+// ============================================
+// MENTOR AVAILABILITY
+// ============================================
+
+model MentorAvailability {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  day         String   // "Monday", "Tuesday", etc.
+  startTime   String   // "14:00"
+  endTime     String   // "18:00"
+  isRecurring Boolean  @default(true)  // Repeats weekly
+  isActive    Boolean  @default(true)  // Currently available
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([day])
+  @@index([isActive])
+}
+
+// ============================================
+// REVIEWS
+// ============================================
+
+model Review {
+  id          String   @id @default(cuid())
+  mentorId    String
+  studentId   String
+  bookingId   String?  @unique  // Link to specific session
+  
+  rating      Int      // 1-5 stars
+  comment     String?
+  
+  // Detailed ratings
+  knowledgeRating     Int?  // 1-5
+  communicationRating Int?  // 1-5
+  punctualityRating   Int?  // 1-5
+  
+  sessionDate DateTime
+  createdAt   DateTime @default(now())
+  
+  mentor      User     @relation("MentorReviews", fields: [mentorId], references: [id], onDelete: Cascade)
+  student     User     @relation("StudentReviews", fields: [studentId], references: [id])
+  booking     Booking? @relation(fields: [bookingId], references: [id])
+  
+  @@index([mentorId])
+  @@index([studentId])
+  @@index([rating])
+}
+
+// ============================================
+// SOS ALERTS
+// ============================================
+
+model SOSAlert {
+  id            String    @id @default(cuid())
+  studentId     String
+  course        String    // Course needing help
+  urgency       String    // "Critical", "High", "Medium"
+  timeLeft      Int       // Minutes until quiz/exam
+  description   String
+  status        String    @default("PENDING") // PENDING, ACCEPTED, COMPLETED, CANCELLED
+  acceptedById  String?
+  doubleRate    Boolean   @default(true)
+  expiresAt     DateTime? // When alert expires
+  
+  createdAt     DateTime  @default(now())
+  
+  student       User      @relation("StudentAlerts", fields: [studentId], references: [id], onDelete: Cascade)
+  acceptedBy    User?     @relation("MentorAlerts", fields: [acceptedById], references: [id])
+  booking       Booking?  // Linked booking if accepted
+  
+  @@index([studentId])
+  @@index([acceptedById])
+  @@index([status])
+  @@index([course])
+}
+
+// ============================================
+// USER PREFERENCES
+// ============================================
+
+model Preference {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Notifications
+  emailNotifications    Boolean  @default(true)
+  pushNotifications     Boolean  @default(true)
+  smsNotifications      Boolean  @default(false)
+  
+  // UI Preferences
+  preferredLanguage     String   @default("en") // "en", "ur"
+  theme                 String   @default("system") // "light", "dark", "system"
+  
+  // Privacy
+  hideTimetableFromOthers Boolean @default(false)
+  showOnlineStatus        Boolean @default(true)
+  allowSOSRequests        Boolean @default(true)
+  
+  // Learning Preferences (for students)
+  preferredSessionDuration Int?    // Minutes
+  preferredCommunication   String? // "chat", "video", "in-person"
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        NotificationType
+  title       String
+  message     String
+  isRead      Boolean          @default(false)
+  actionUrl   String?          // Link to relevant page
+  metadata    String?          // JSON extra data
+  
+  createdAt   DateTime         @default(now())
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+}
+
+// ============================================
+// ACTIVITY LOG
+// ============================================
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  action      String   // LOGIN, LOGOUT, BOOKING_CREATED, PROFILE_UPDATED, etc.
+  entityType  String?  // "Booking", "Review", "TimeSlot", etc.
+  entityId    String?  // ID of related entity
+  description String?  // Human-readable description
+  metadata    String?  // JSON extra data
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}

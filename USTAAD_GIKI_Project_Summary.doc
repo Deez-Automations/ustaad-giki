@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>USTAAD GIKI - Project Summary</title>
+    <style>
+        body { font-family: 'Calibri', sans-serif; margin: 40px; line-height: 1.6; color: #333; }
+        h1 { color: #002147; text-align: center; font-size: 28pt; border-bottom: 3px solid #002147; padding-bottom: 10px; }
+        h2 { color: #002147; font-size: 16pt; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+        h3 { color: #0066cc; font-size: 13pt; margin-top: 20px; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #002147; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: 'Consolas', monospace; }
+        .highlight { background-color: #fffde7; padding: 15px; border-left: 4px solid #ffc107; margin: 15px 0; }
+        ul { margin: 10px 0; }
+        li { margin: 5px 0; }
+        .tagline { text-align: center; font-style: italic; color: #666; font-size: 14pt; margin: 20px 0; }
+        .section-box { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+
+<h1>USTAAD GIKI</h1>
+<p class="tagline">"Quiz ho, lab ho ya mid, Ustaad's got you."</p>
+
+<h2>1. Overview</h2>
+<p><strong>USTAAD GIKI</strong> is a peer-to-peer academic mentorship platform built exclusively for students of <strong>Ghulam Ishaq Khan Institute of Engineering Sciences and Technology (GIKI)</strong>. The platform connects junior students with verified senior mentors who have excelled in specific courses, enabling targeted academic support.</p>
+
+<h2>2. Technology Stack</h2>
+<table>
+    <tr><th>Layer</th><th>Technology</th></tr>
+    <tr><td>Framework</td><td>Next.js 16 (App Router, Turbopack)</td></tr>
+    <tr><td>Language</td><td>TypeScript</td></tr>
+    <tr><td>Styling</td><td>Tailwind CSS</td></tr>
+    <tr><td>Database</td><td>SQLite with Prisma ORM</td></tr>
+    <tr><td>Authentication</td><td>NextAuth v5 (Credentials Provider)</td></tr>
+    <tr><td>Animations</td><td>Framer Motion</td></tr>
+    <tr><td>OCR</td><td>Tesseract.js (for timetable extraction)</td></tr>
+    <tr><td>AI Integration</td><td>Groq SDK</td></tr>
+    <tr><td>Form Handling</td><td>React Hook Form + Zod validation</td></tr>
+</table>
+
+<h2>3. User Roles</h2>
+
+<h3>3.1 Student</h3>
+<ul>
+    <li>Search and book mentors by course</li>
+    <li>Create emergency SOS alerts before exams/quizzes</li>
+    <li>Manage personal timetable</li>
+    <li>Rate and review mentors</li>
+</ul>
+
+<h3>3.2 Mentor</h3>
+<ul>
+    <li>Set subjects they can teach</li>
+    <li>Define hourly rates (PKR 500-1000)</li>
+    <li>Accept/decline session requests</li>
+    <li>Respond to SOS alerts (2x pay)</li>
+    <li>Track earnings and ratings</li>
+</ul>
+
+<h3>3.3 Admin</h3>
+<ul>
+    <li>Manage users and profiles</li>
+    <li>Verify student identities</li>
+</ul>
+
+<h2>4. Core Functionalities</h2>
+
+<h3>4.1 Authentication & Registration</h3>
+<table>
+    <tr><th>Feature</th><th>Description</th></tr>
+    <tr><td>Student Registration</td><td>Email, password, roll number, batch, faculty, CNIC, live photo capture</td></tr>
+    <tr><td>Mentor Registration</td><td>Extended profile with subjects, hourly rate, bio, proficiency level</td></tr>
+    <tr><td>Login</td><td>Secure credential-based authentication</td></tr>
+    <tr><td>Identity Verification</td><td>Webcam capture for live photo verification</td></tr>
+</table>
+
+<h3>4.2 Mentor Search & Discovery</h3>
+<div class="highlight">
+    <strong>Use Case:</strong> A student struggling with CS101 wants to find a senior who has aced the course.
+</div>
+<table>
+    <tr><th>Feature</th><th>Description</th></tr>
+    <tr><td>Course-based Filtering</td><td>Filter mentors by specific courses (CS101, EE202, MATH101, etc.)</td></tr>
+    <tr><td>Search by Name/Subject</td><td>Text-based search across mentor profiles</td></tr>
+    <tr><td>Rate Filtering</td><td>Filter by hourly rate range (min/max PKR)</td></tr>
+    <tr><td>Rating Sort</td><td>Mentors sorted by rating (highest first)</td></tr>
+    <tr><td>Mentor Cards</td><td>Display photo, rating, review count, subjects, hourly rate</td></tr>
+</table>
+
+<h3>4.3 Smart Timetable Management</h3>
+<div class="highlight">
+    <strong>Use Case:</strong> Sync schedules to find common free slots between student and mentor.
+</div>
+<table>
+    <tr><th>Feature</th><th>Description</th></tr>
+    <tr><td>Manual Entry</td><td>Add classes with day, time, title, location, color</td></tr>
+    <tr><td>OCR Extraction</td><td>Upload timetable image → Tesseract.js extracts schedule</td></tr>
+    <tr><td>Bulk Import</td><td>Save multiple time slots after OCR processing</td></tr>
+    <tr><td>Visual Calendar</td><td>Weekly grid view with color-coded time blocks</td></tr>
+    <tr><td>Edit/Delete</td><td>Modify or remove individual slots</td></tr>
+    <tr><td>Clear All</td><td>Reset entire timetable</td></tr>
+</table>
+
+<h3>4.4 Emergency SOS Alert System</h3>
+<div class="highlight">
+    <strong>Use Case:</strong> A student has a quiz in 30 minutes and needs urgent help. They send an SOS to all relevant mentors.
+</div>
+<table>
+    <tr><th>Feature</th><th>Description</th></tr>
+    <tr><td>Create Alert</td><td>Select course, urgency level, time remaining, description</td></tr>
+    <tr><td>Urgency Levels</td><td>Critical, High, Medium</td></tr>
+    <tr><td>Double Rate</td><td>SOS sessions pay mentors 2x their normal hourly rate</td></tr>
+    <tr><td>Mentor Matching</td><td>Notifies only mentors who teach the specific course</td></tr>
+    <tr><td>Real-time Status</td><td>PENDING → ACCEPTED → COMPLETED/CANCELLED</td></tr>
+    <tr><td>Cancel Option</td><td>Students can cancel pending alerts</td></tr>
+</table>
+
+<div class="section-box">
+    <strong>SOS Alert Flow:</strong><br>
+    1. Student creates SOS Alert → 2. System notifies matching mentors → 3. Mentor accepts alert → 4. Student notified of acceptance → 5. Mentor provides help at 2x rate
+</div>
+
+<h3>4.5 Review & Rating System</h3>
+<div class="highlight">
+    <strong>Use Case:</strong> After a session, students rate their mentor to help future students make informed decisions.
+</div>
+<table>
+    <tr><th>Feature</th><th>Description</th></tr>
+    <tr><td>Star Rating</td><td>1-5 stars per session</td></tr>
+    <tr><td>Written Comments</td><td>Optional text feedback</td></tr>
+    <tr><td>Average Rating</td><td>Auto-calculated mentor rating</td></tr>
+    <tr><td>Review Count</td><td>Total number of reviews displayed</td></tr>
+    <tr><td>Session Tracking</td><td>Reviews linked to specific session dates</td></tr>
+</table>
+
+<h2>5. Database Models</h2>
+<table>
+    <tr><th>Model</th><th>Purpose</th></tr>
+    <tr><td>User</td><td>Core user account (email, password, role)</td></tr>
+    <tr><td>Profile</td><td>Extended profile (GIKI-specific: roll number, batch, faculty, CNIC)</td></tr>
+    <tr><td>TimeSlot</td><td>Timetable entries for scheduling</td></tr>
+    <tr><td>Review</td><td>Student ratings and feedback for mentors</td></tr>
+    <tr><td>SOSAlert</td><td>Emergency help requests</td></tr>
+</table>
+
+<h2>6. Page Structure</h2>
+<table>
+    <tr><th>Route</th><th>Description</th></tr>
+    <tr><td>/</td><td>Landing page (Hero, Mentor Search, Testimonials)</td></tr>
+    <tr><td>/auth/login</td><td>Student/Mentor login</td></tr>
+    <tr><td>/auth/register</td><td>Student registration</td></tr>
+    <tr><td>/auth/mentor-register</td><td>Mentor registration</td></tr>
+    <tr><td>/mentors</td><td>Browse all mentors</td></tr>
+    <tr><td>/timetable</td><td>Manage personal timetable</td></tr>
+    <tr><td>/student</td><td>Student dashboard</td></tr>
+    <tr><td>/mentor</td><td>Mentor dashboard</td></tr>
+</table>
+
+<h2>7. Key Use Cases</h2>
+<table>
+    <tr><th>Use Case</th><th>Actor</th><th>Flow</th></tr>
+    <tr><td>Find a Mentor</td><td>Student</td><td>Browse → Filter by course → View profile → Book trial</td></tr>
+    <tr><td>Register as Mentor</td><td>Senior Student</td><td>Register → Set subjects & rate → Complete profile → Accept sessions</td></tr>
+    <tr><td>Schedule Help</td><td>Student</td><td>View mentor availability → Find matching free slot → Book session</td></tr>
+    <tr><td>Emergency Help</td><td>Student</td><td>Create SOS → Mentors notified → Mentor accepts → Get help fast</td></tr>
+    <tr><td>Track Progress</td><td>Mentor</td><td>View dashboard → See earnings → Read reviews → Improve rating</td></tr>
+    <tr><td>Import Timetable</td><td>Any User</td><td>Upload image → OCR extracts schedule → Save to profile</td></tr>
+</table>
+
+<h2>8. Business Model</h2>
+<table>
+    <tr><th>Aspect</th><th>Details</th></tr>
+    <tr><td>Pricing</td><td>PKR 500-1000 per hour (mentor-defined)</td></tr>
+    <tr><td>SOS Premium</td><td>2x rate for emergency sessions</td></tr>
+    <tr><td>Platform Fee</td><td>Free for students, mentors earn directly</td></tr>
+</table>
+
+<h2>9. Summary</h2>
+<p>USTAAD GIKI solves the <strong>academic struggle</strong> at GIKI by:</p>
+<ul>
+    <li>✅ <strong>Connecting</strong> juniors with seniors who have aced specific courses</li>
+    <li>✅ <strong>Smart scheduling</strong> that syncs timetables automatically</li>
+    <li>✅ <strong>Emergency SOS</strong> for last-minute exam/quiz help</li>
+    <li>✅ <strong>Quality assurance</strong> through ratings and verified profiles</li>
+    <li>✅ <strong>Affordable rates</strong> controlled by the GIKI student community</li>
+</ul>
+
+<hr>
+<p style="text-align: center; color: #666; font-size: 10pt;">
+    © 2025 USTAAD GIKI | Built for Ghulam Ishaq Khan Institute of Engineering Sciences and Technology
+</p>
+
+</body>
+</html>

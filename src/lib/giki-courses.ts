@@ -1,0 +1,223 @@
+/**
+ * GIKI Official Course Catalog
+ * Organized by Faculty/Department  
+ * Source: giki.edu.pk (2024)
+ */
+
+export const GIKI_DEPARTMENTS = [
+    "Computer Science & Engineering",
+    "Electrical Engineering",
+    "Mechanical Engineering",
+    "Materials & Chemical Engineering",
+    "Civil Engineering",
+    "Management Sciences",
+    "Engineering Sciences"
+] as const;
+
+export type GIKIDepartment = typeof GIKI_DEPARTMENTS[number];
+
+export const GIKI_COURSES_BY_DEPARTMENT: Record<GIKIDepartment, string[]> = {
+    "Computer Science & Engineering": [
+        "Object-Oriented Programming",
+        "Data Structures and Algorithms",
+        "Database Management Systems",
+        "Computer Networks",
+        "Operating Systems",
+        "Software Engineering",
+        "Discrete Mathematics",
+        "Digital Logic Design",
+        "Computer Organization & Assembly Language",
+        "Design & Analysis of Algorithms",
+        "Artificial Intelligence",
+        "Machine Learning",
+        "Data Mining",
+        "Deep Learning",
+        "Computer Vision",
+        "Natural Language Processing",
+        "Data & Network Security",
+        "Cryptography",
+        "Penetration Testing",
+        "Ethical Hacking",
+        "Big Data Analytics",
+        "Data Warehousing",
+        "Data Visualization",
+        "Statistical Analysis",
+        "Software Project Management",
+        "Software Requirements Engineering",
+        "UI/UX Design",
+        "Web Development",
+        "Mobile App Development",
+        "Cloud Computing",
+        "Distributed Systems",
+        "Computer Graphics",
+        "Compiler Design",
+        "Theory of Computation"
+    ],
+
+    "Electrical Engineering": [
+        "Circuit Analysis",
+        "Electronics I",
+        "Electronics II",
+        "Signals and Systems",
+        "Digital Logic Design",
+        "Electromagnetic Theory",
+        "Control Systems",
+        "Electrical Machines",
+        "Power Systems",
+        "Digital Signal Processing",
+        "Communication Systems",
+        "Microprocessor Interfacing",
+        "Microelectronics",
+        "VLSI Design",
+        "ASIC Design",
+        "Embedded Systems",
+        "Power System Analysis",
+        "Power Electronics",
+        "Power System Protection",
+        "Renewable Energy Systems",
+        "Electric Drives",
+        "Electrical Measurements",
+        "Instrumentation",
+        "PLC Programming",
+        "Industrial Automation",
+        "Robotics"
+    ],
+
+    "Mechanical Engineering": [
+        "Engineering Mechanics",
+        "Thermodynamics",
+        "Fluid Mechanics",
+        "Heat Transfer",
+        "Machine Design",
+        "Manufacturing Processes",
+        "Strength of Materials",
+        "Dynamics",
+        "Kinematics",
+        "CAD/CAM",
+        "Finite Element Analysis",
+        "Automotive Engineering",
+        "HVAC Systems",
+        "Mechatronics",
+        "Control Systems",
+        "Vibrations",
+        "Materials Science",
+        "Engineering Drawing",
+        "Workshop Practice",
+        "Industrial Engineering",
+        "Quality Control"
+    ],
+
+    "Materials & Chemical Engineering": [
+        "Chemical Process Principles",
+        "Chemical Reaction Engineering",
+        "Mass Transfer",
+        "Heat Transfer",
+        "Process Control",
+        "Process Design",
+        "Thermodynamics",
+        "Transport Phenomena",
+        "Petrochemical Engineering",
+        "Environmental Engineering",
+        "Materials Science",
+        "Physical Metallurgy",
+        "Mechanical Metallurgy",
+        "Materials Characterization",
+        "Ceramics",
+        "Polymers",
+        "Composite Materials",
+        "Corrosion Engineering",
+        "Materials Processing",
+        "Nanomaterials"
+    ],
+
+    "Civil Engineering": [
+        "Engineering Mechanics",
+        "Structural Analysis",
+        "Reinforced Concrete Design",
+        "Steel Structures",
+        "Geotechnical Engineering",
+        "Fluid Mechanics",
+        "Hydraulics",
+        "Transportation Engineering",
+        "Environmental Engineering",
+        "Foundation Engineering",
+        "Construction Management",
+        "Project Planning",
+        "Surveying",
+        "Highway Engineering",
+        "Water Resources Engineering",
+        "Earthquake Engineering",
+        "Building Materials",
+        "Concrete Technology",
+        "CAD for Civil Engineering",
+        "Engineering Drawing",
+        "Quantity Surveying",
+        "Urban Planning"
+    ],
+
+    "Management Sciences": [
+        "Principles of Management",
+        "Financial Accounting",
+        "Managerial Accounting",
+        "Corporate Finance",
+        "Marketing Management",
+        "Human Resource Management",
+        "Operations Management",
+        "Strategic Management",
+        "Organizational Behavior",
+        "Investment Analysis",
+        "Financial Statement Analysis",
+        "Cost Accounting",
+        "Auditing",
+        "Taxation",
+        "Consumer Behavior",
+        "Digital Marketing",
+        "Brand Management",
+        "Entrepreneurship",
+        "Business Development",
+        "Supply Chain Management",
+        "Logistics Management",
+        "Procurement",
+        "Inventory Management",
+        "Project Planning & Control",
+        "Risk Management",
+        "Quality Management",
+        "Business Statistics",
+        "Economics",
+        "Business Law",
+        "MIS (Management Information Systems)"
+    ],
+
+    "Engineering Sciences": [
+        "Engineering Mathematics",
+        "Calculus",
+        "Linear Algebra",
+        "Differential Equations",
+        "Numerical Methods",
+        "Probability & Statistics",
+        "Classical Mechanics",
+        "Electromagnetism",
+        "Quantum Mechanics",
+        "Modern Physics",
+        "Optics",
+        "Photonics",
+        "Microelectronics",
+        "Modeling & Simulation",
+        "Machine Learning",
+        "Computational Physics",
+        "Signal Processing",
+        "Engineering Drawing",
+        "Programming Fundamentals",
+        "Engineering Design"
+    ]
+};
+
+// For dropdown selection
+export const COURSE_OPTIONS = Object.entries(GIKI_COURSES_BY_DEPARTMENT).flatMap(
+    ([department, courses]: [string, string[]]) =>
+        courses.map((course: string) => ({
+            value: course,
+            label: course,
+            department
+        }))
+);
