@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Check, DollarSign, BookOpen, User } from "lucide-react";
+import { ArrowRight, ArrowLeft, Check, DollarSign, BookOpen, User, Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { registerMentor } from "@/actions/mentor-register";
+import { checkEmailExists } from "@/actions/check-email";
 import { GIKI_DEPARTMENTS, GIKI_COURSES_BY_DEPARTMENT, type GIKIDepartment } from "@/lib/giki-courses";
 
 interface FormData {
@@ -44,6 +45,8 @@ export default function MentorRegisterWizard() {
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+    const [emailError, setEmailError] = useState("");
+    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
     const [formData, setFormData] = useState<FormData>({
         name: "",
@@ -63,6 +66,28 @@ export default function MentorRegisterWizard() {
 
     const updateFormData = (updates: Partial<FormData>) => {
         setFormData((prev) => ({ ...prev, ...updates }));
+    };
+
+    // Check email when user finishes typing
+    const handleEmailBlur = async () => {
+        const email = formData.email.trim();
+        if (!email) return;
+
+        if (!email.endsWith("@giki.edu.pk")) {
+            setEmailError("Please use your @giki.edu.pk email");
+            return;
+        }
+
+        setIsCheckingEmail(true);
+        setEmailError("");
+
+        const result = await checkEmailExists(email);
+
+        if (result.exists) {
+            setEmailError(`This email is already registered as ${result.role}. Please login instead.`);
+        }
+
+        setIsCheckingEmail(false);
     };
 
     const nextStep = () => {
@@ -190,9 +215,23 @@ export default function MentorRegisterWizard() {
                                     type="email"
                                     placeholder="Email (@giki.edu.pk)"
                                     value={formData.email}
-                                    onChange={(e) => updateFormData({ email: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-giki-blue focus:border-transparent"
+                                    onChange={(e) => {
+                                        updateFormData({ email: e.target.value });
+                                        setEmailError(""); // Clear error on change
+                                    }}
+                                    onBlur={handleEmailBlur}
+                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-giki-blue focus:border-transparent ${emailError ? "border-red-500" : "border-gray-300"
+                                        }`}
                                 />
+                                {isCheckingEmail && (
+                                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Checking email...
+                                    </div>
+                                )}
+                                {emailError && (
+                                    <p className="text-sm text-red-600 -mt-2">{emailError}</p>
+                                )}
 
                                 <input
                                     type="password"
