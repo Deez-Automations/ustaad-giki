@@ -1,36 +1,166 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<p align="center">
+  <img src="public/logo.png" alt="USTAAD GIKI Logo" width="120" />
+</p>
 
-## Getting Started
+<h1 align="center">USTAAD GIKI 🎓</h1>
 
-First, run the development server:
+<p align="center">
+  <strong>Smart Peer Tutoring Platform for GIKI Students</strong>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#tech-stack">Tech Stack</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#project-structure">Structure</a>
+</p>
+
+---
+
+## 📖 About
+
+**USTAAD GIKI** (*Urdu for "Teacher"*) is an intelligent peer-to-peer tutoring platform designed exclusively for **Ghulam Ishaq Khan Institute (GIKI)** students. It connects students seeking academic help with qualified senior peers who can mentor them — all within the trusted GIKI ecosystem.
+
+### 🎯 The Problem We Solve
+
+- Students struggle to find reliable tutors for specific courses
+- No centralized system for peer tutoring at GIKI
+- Scheduling conflicts between students and mentors
+- Last-minute assignment help is hard to find
+
+### 💡 Our Solution
+
+USTAAD GIKI provides:
+- **Smart Timetable Matching** — Book sessions when both you and your mentor are free
+- **OCR Timetable Upload** — Just snap your timetable, we extract it automatically
+- **SOS Alerts** — Urgent help requests for last-minute deadlines
+- **Verified GIKI Community** — Only @giki.edu.pk emails allowed
+
+---
+
+## ✨ Features
+
+### For Students
+| Feature | Description |
+|---------|-------------|
+| 🔍 **Find Mentors** | Search by course, department, rating & price |
+| 📅 **Smart Booking** | Only shows times when both parties are free |
+| 📸 **OCR Timetable** | Upload timetable image → auto-extract schedule |
+| 🆘 **SOS Alerts** | Broadcast urgent help requests to all mentors |
+| 📊 **Dashboard** | Track bookings, upcoming sessions, wallet balance |
+
+### For Mentors
+| Feature | Description |
+|---------|-------------|
+| 💰 **Earn Money** | Set your own hourly rate (PKR 500-1000) |
+| 📬 **Booking Requests** | Accept or decline with one click |
+| 📈 **Analytics** | Track earnings, sessions, ratings |
+| ⚡ **SOS Opportunities** | Get double rate for urgent requests |
+| ⭐ **Build Reputation** | Collect reviews and improve your rating |
+
+---
+
+## 🛠 Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **Framework** | Next.js 16 (App Router) |
+| **Language** | TypeScript |
+| **Styling** | Tailwind CSS |
+| **Database** | Turso (Cloud SQLite) |
+| **ORM** | Prisma |
+| **Auth** | NextAuth.js |
+| **AI/OCR** | Groq Vision API |
+| **Animations** | Framer Motion |
+| **Deployment** | Vercel |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Turso database (or local SQLite)
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/Deez-Automations/ustaad-giki.git
+cd ustaad-giki
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your credentials
+
+# Initialize the database
+npx tsx scripts/sync-turso-schema.ts
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+DATABASE_URL=           # Turso database URL
+TURSO_AUTH_TOKEN=       # Turso auth token
+AUTH_SECRET=            # NextAuth secret (generate with: openssl rand -base64 32)
+GROQ_API_KEY=           # Groq API key for OCR
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+ustaad-giki/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── (dashboard)/        # Protected dashboard routes
+│   │   │   ├── student/        # Student dashboard
+│   │   │   ├── mentor/         # Mentor dashboard
+│   │   │   └── timetable/      # Timetable management
+│   │   ├── auth/               # Authentication pages
+│   │   └── mentors/            # Mentor search page
+│   ├── actions/                # Server actions
+│   │   ├── booking-actions.ts  # Booking & timetable matching
+│   │   ├── register.ts         # User registration
+│   │   └── sos-actions.ts      # SOS alert system
+│   ├── components/             # React components
+│   │   ├── booking/            # Booking modal & pending requests
+│   │   ├── home/               # Landing page components
+│   │   ├── mentor/             # Mentor dashboard components
+│   │   └── timetable/          # Timetable upload & calendar
+│   └── lib/                    # Utilities & config
+├── prisma/                     # Database schema
+└── scripts/                    # Database initialization scripts
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🔐 Security
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- ✅ GIKI email verification (@giki.edu.pk only)
+- ✅ CNIC validation for identity
+- ✅ Password hashing with bcrypt
+- ✅ JWT session tokens
+- ✅ Environment variables for secrets
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 📄 License
+
+This project is developed for **GIKI CS 391** coursework.
+
+---
+
+<p align="center">
+  Made with ❤️ for GIKI Students
+</p>
