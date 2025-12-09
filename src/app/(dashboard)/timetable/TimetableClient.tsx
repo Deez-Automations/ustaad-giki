@@ -11,15 +11,19 @@ import Link from "next/link";
 
 interface TimetableClientProps {
     initialTimeSlots: any[];
+    userRole?: string;
 }
 
-export default function TimetableClient({ initialTimeSlots }: TimetableClientProps) {
+export default function TimetableClient({ initialTimeSlots, userRole = "STUDENT" }: TimetableClientProps) {
     const [mode, setMode] = useState<"upload" | "calendar">("upload");
     const [extractedSlots, setExtractedSlots] = useState<TimeSlotData[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [saveError, setSaveError] = useState("");
     const router = useRouter();
+
+    // Determine dashboard path based on role
+    const dashboardPath = userRole === "MENTOR" ? "/mentor" : "/student";
 
     const handleExtracted = (slots: ExtractedTimeSlot[]) => {
         setExtractedSlots(slots as TimeSlotData[]);
@@ -36,9 +40,9 @@ export default function TimetableClient({ initialTimeSlots }: TimetableClientPro
             setIsSaving(false);
         } else {
             setSaveSuccess(true);
-            // Redirect to dashboard after short delay
+            // Redirect to correct dashboard after short delay
             setTimeout(() => {
-                router.push("/student");
+                router.push(dashboardPath);
                 router.refresh();
             }, 1500);
         }
@@ -50,7 +54,7 @@ export default function TimetableClient({ initialTimeSlots }: TimetableClientPro
         <div>
             {/* Back Button */}
             <Link
-                href="/student"
+                href={dashboardPath}
                 className="inline-flex items-center gap-2 text-giki-blue hover:underline mb-6"
             >
                 <ArrowLeft className="w-4 h-4" />

@@ -10,6 +10,9 @@ export default async function TimetablePage() {
     const result = await getTimeSlots();
     const timeSlots = result.timeSlots || [];
 
+    // Get user role to redirect to correct dashboard after saving
+    const userRole = (session.user as any)?.role || "STUDENT";
+
     return (
         <div className="min-h-screen pt-24 px-4 max-w-7xl mx-auto pb-12">
             <div className="mb-8">
@@ -19,7 +22,7 @@ export default async function TimetablePage() {
                 </p>
             </div>
 
-            <TimetableClient initialTimeSlots={timeSlots} />
+            <TimetableClient initialTimeSlots={timeSlots} userRole={userRole} />
         </div>
     );
 }
