@@ -10,6 +10,7 @@ import ActiveSessions from "@/components/mentor/ActiveSessions";
 import EarningsCard from "@/components/mentor/EarningsCard";
 import ReviewsDisplay from "@/components/mentor/ReviewsDisplay";
 import ProfileCompletion from "@/components/mentor/ProfileCompletion";
+import PendingBookings from "@/components/booking/PendingBookings";
 
 export default async function MentorDashboard() {
     const session = await auth();
@@ -127,41 +128,7 @@ export default async function MentorDashboard() {
             )}
 
             {/* Pending Booking Requests */}
-            {pendingBookings.length > 0 && (
-                <div className="mb-8 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl p-6">
-                    <h2 className="text-xl font-bold text-yellow-800 mb-4">
-                        📬 Pending Booking Requests ({pendingBookings.length})
-                    </h2>
-                    <div className="space-y-3">
-                        {pendingBookings.map((booking: any) => (
-                            <div key={booking.id} className="flex items-center justify-between bg-white p-4 rounded-xl border border-yellow-100">
-                                <div>
-                                    <p className="font-semibold text-gray-800">{booking.student?.name || "Student"}</p>
-                                    <p className="text-sm text-gray-600">{booking.course} • {booking.topic || "General session"}</p>
-                                    <p className="text-xs text-gray-500">
-                                        {new Date(booking.scheduledDate).toLocaleDateString("en-US", {
-                                            weekday: "short",
-                                            month: "short",
-                                            day: "numeric",
-                                        })} • {booking.startTime} - {booking.endTime}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-green-600">PKR {booking.totalAmount?.toLocaleString()}</p>
-                                    <div className="flex gap-2 mt-2">
-                                        <button className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600">
-                                            Accept
-                                        </button>
-                                        <button className="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-sm font-medium hover:bg-red-200">
-                                            Decline
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+            <PendingBookings bookings={pendingBookings} />
 
             {/* Stats Cards */}
             <MentorStats
