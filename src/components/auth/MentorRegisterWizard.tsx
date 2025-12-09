@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, Check, DollarSign, BookOpen, User } from "lucide-react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { registerMentor } from "@/actions/mentor-register";
 import { GIKI_DEPARTMENTS, GIKI_COURSES_BY_DEPARTMENT, type GIKIDepartment } from "@/lib/giki-courses";
 
@@ -73,6 +75,8 @@ export default function MentorRegisterWizard() {
         if (currentStep > 1) setCurrentStep(currentStep - 1);
     };
 
+    const router = useRouter();
+
     const handleSubmit = async () => {
         setIsSubmitting(true);
         setError("");
@@ -80,17 +84,33 @@ export default function MentorRegisterWizard() {
         try {
             const result = await registerMentor({
                 ...formData,
-                livePhotoData: "", // No live photo required anymore
+                livePhotoData: "",
             });
 
             if (result.error) {
                 setError(result.error);
-            } else {
-                window.location.href = "/mentor";
+                setIsSubmitting(false);
+                return;
             }
-        } catch (err) {
-            setError("Registration failed. Please try again.");
-        } finally {
+
+            // Registration successful - auto-login and redirect
+            const signInResult = await signIn("credentials", {
+                email: formData.email,
+                password: formData.password,
+                redirect: false,
+            });
+
+            if (signInResult?.error) {
+                // If auto-login fails, redirect to login page
+                router.push("/auth/login?success=true");
+            } else {
+                // Auto-login successful - go directly to mentor dashboard
+                router.push("/mentor");
+                router.refresh();
+            }
+        } catch (err: any) {
+            console.error("Mentor registration error:", err);
+            setError(err.message || "Registration failed. Please try again.");
             setIsSubmitting(false);
         }
     };

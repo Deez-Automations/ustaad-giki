@@ -6,6 +6,7 @@ import {
     Check, ChevronRight, Loader2, User, GraduationCap,
     Shield, BookOpen
 } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { registerUser } from "@/actions/register";
 import { useRouter } from "next/navigation";
 import { GIKI_DEPARTMENTS, GIKI_COURSES_BY_DEPARTMENT, type GIKIDepartment } from "@/lib/giki-courses";
@@ -115,16 +116,37 @@ export default function StudentRegisterWizard() {
         setIsSubmitting(true);
         setError("");
 
-        const result = await registerUser({
-            ...formData,
-            livePhotoUrl: "", // No live photo required anymore
-        });
+        try {
+            const result = await registerUser({
+                ...formData,
+                livePhotoUrl: "",
+            });
 
-        if (result.error) {
-            setError(result.error);
+            if (result.error) {
+                setError(result.error);
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Registration successful - auto-login and redirect
+            const signInResult = await signIn("credentials", {
+                email: formData.email,
+                password: formData.password,
+                redirect: false,
+            });
+
+            if (signInResult?.error) {
+                // If auto-login fails, redirect to login page
+                router.push("/auth/login?success=true");
+            } else {
+                // Auto-login successful - go directly to dashboard
+                router.push("/student");
+                router.refresh();
+            }
+        } catch (err: any) {
+            console.error("Registration error:", err);
+            setError(err.message || "Registration failed. Please try again.");
             setIsSubmitting(false);
-        } else {
-            router.push("/auth/login?success=true");
         }
     };
 
