@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Search, Star, Filter } from "lucide-react";
 import { searchMentors } from "@/actions/search-actions";
 import { GIKI_COURSES_BY_DEPARTMENT, GIKI_DEPARTMENTS } from "@/lib/giki-courses";
+import BookingModal from "@/components/booking/BookingModal";
 
 interface Mentor {
     id: string;
@@ -28,6 +29,8 @@ export default function MentorSearchPage() {
     const [minRate, setMinRate] = useState(500);
     const [maxRate, setMaxRate] = useState(1000);
     const [showFilters, setShowFilters] = useState(false);
+    const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
+    const [showBookingModal, setShowBookingModal] = useState(false);
 
     useEffect(() => {
         loadMentors();
@@ -200,8 +203,8 @@ export default function MentorSearchPage() {
                                                 <Star
                                                     key={i}
                                                     className={`w-4 h-4 ${i < Math.round(mentor.rating)
-                                                            ? "fill-yellow-400 text-yellow-400"
-                                                            : "text-gray-300"
+                                                        ? "fill-yellow-400 text-yellow-400"
+                                                        : "text-gray-300"
                                                         }`}
                                                 />
                                             ))}
@@ -238,7 +241,13 @@ export default function MentorSearchPage() {
                                         <p className="text-sm text-gray-600">Hourly Rate</p>
                                         <p className="text-xl font-bold text-green-600">PKR {mentor.hourlyRate}</p>
                                     </div>
-                                    <button className="px-6 py-2 bg-giki-blue text-white rounded-lg font-medium hover:bg-opacity-90 transition-colors">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedMentor(mentor);
+                                            setShowBookingModal(true);
+                                        }}
+                                        className="px-6 py-2 bg-giki-blue text-white rounded-lg font-medium hover:bg-opacity-90 transition-colors"
+                                    >
                                         Book Session
                                     </button>
                                 </div>
@@ -246,6 +255,23 @@ export default function MentorSearchPage() {
                         </div>
                     ))}
                 </div>
+            )}
+
+            {/* Booking Modal */}
+            {selectedMentor && (
+                <BookingModal
+                    isOpen={showBookingModal}
+                    onClose={() => {
+                        setShowBookingModal(false);
+                        setSelectedMentor(null);
+                    }}
+                    mentor={{
+                        id: selectedMentor.id,
+                        name: selectedMentor.name,
+                        hourlyRate: selectedMentor.hourlyRate,
+                        subjects: selectedMentor.subjects,
+                    }}
+                />
             )}
         </div>
     );

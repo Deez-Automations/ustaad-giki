@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSOSAlertsForMentor } from "@/actions/sos-actions";
+import { getMyBookings } from "@/actions/booking-actions";
 import MentorSOSAlerts from "@/components/sos/MentorSOSAlerts";
 import MentorStats from "@/components/mentor/MentorStats";
 import ActiveSessions from "@/components/mentor/ActiveSessions";
@@ -30,11 +31,42 @@ export default async function MentorDashboard() {
     const sosResult = await getSOSAlertsForMentor();
     const sosAlerts = sosResult.alerts || [];
 
-    // Mock data for sessions (will be real when booking system is built)
-    const mockSessions: { id: string; studentName: string; course: string; startTime: string; duration: number; status: "upcoming" | "in-progress" | "completed" }[] = [];
+    // Fetch bookings for this mentor
+    const bookingsResult = await getMyBookings();
+    const allBookings = bookingsResult.bookings || [];
+    const pendingBookings = allBookings.filter((b: any) => b.status === "PENDING" && b.mentorId === userId);
+    const confirmedBookings = allBookings.filter((b: any) => b.status === "CONFIRMED" && b.mentorId === userId);
+    const upcomingSessions = [...pendingBookings, ...confirmedBookings];
 
-    // Mock reviews
-    const reviews: any[] = [];
+    // Convert confirmed bookings to session format for ActiveSessions component
+    const sessionsForDisplay = confirmedBookings.map((b: any) => ({
+        id: b.id,
+        studentName: b.student?.name || "Student",
+        course: b.course,
+        startTime: `${b.scheduledDate} ${b.startTime}`,
+        duration: b.duration,
+        status: "upcoming" as const,
+    }));
+
+    // Fetch real reviews and transform to component format
+    const rawReviews = await prisma.review.findMany({
+        where: { mentorId: userId },
+        include: { student: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+    });
+
+    const reviews = rawReviews.map((r) => ({
+        id: r.id,
+        studentName: r.student?.name || "Anonymous",
+        rating: r.rating,
+        comment: r.comment || "",
+        date: r.createdAt.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        }),
+    }));
 
     // Calculate profile completion
     const calculateCompletion = () => {
@@ -94,10 +126,47 @@ export default async function MentorDashboard() {
                 </div>
             )}
 
+            {/* Pending Booking Requests */}
+            {pendingBookings.length > 0 && (
+                <div className="mb-8 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl p-6">
+                    <h2 className="text-xl font-bold text-yellow-800 mb-4">
+                        📬 Pending Booking Requests ({pendingBookings.length})
+                    </h2>
+                    <div className="space-y-3">
+                        {pendingBookings.map((booking: any) => (
+                            <div key={booking.id} className="flex items-center justify-between bg-white p-4 rounded-xl border border-yellow-100">
+                                <div>
+                                    <p className="font-semibold text-gray-800">{booking.student?.name || "Student"}</p>
+                                    <p className="text-sm text-gray-600">{booking.course} • {booking.topic || "General session"}</p>
+                                    <p className="text-xs text-gray-500">
+                                        {new Date(booking.scheduledDate).toLocaleDateString("en-US", {
+                                            weekday: "short",
+                                            month: "short",
+                                            day: "numeric",
+                                        })} • {booking.startTime} - {booking.endTime}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-bold text-green-600">PKR {booking.totalAmount?.toLocaleString()}</p>
+                                    <div className="flex gap-2 mt-2">
+                                        <button className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600">
+                                            Accept
+                                        </button>
+                                        <button className="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-sm font-medium hover:bg-red-200">
+                                            Decline
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Stats Cards */}
             <MentorStats
                 totalEarnings={profile.totalEarnings || 0}
-                totalSessions={0}
+                totalSessions={allBookings.filter((b: any) => b.status === "COMPLETED").length}
                 averageRating={profile.rating || 5.0}
                 responseTime="< 2 hrs"
                 acceptanceRate={95}
@@ -109,13 +178,13 @@ export default async function MentorDashboard() {
                 {/* Left: Sessions & Earnings */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Active Sessions */}
-                    <ActiveSessions sessions={mockSessions} />
+                    <ActiveSessions sessions={sessionsForDisplay} />
 
                     {/* Earnings Breakdown */}
                     <EarningsCard
                         totalEarnings={profile.totalEarnings || 0}
                         monthlyEarnings={0}
-                        pendingPayments={0}
+                        pendingPayments={pendingBookings.reduce((sum: number, b: any) => sum + (b.totalAmount || 0), 0)}
                     />
                 </div>
 

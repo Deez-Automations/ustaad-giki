@@ -2,6 +2,7 @@ import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getTimeSlots } from "@/actions/timetable-actions";
+import { getMyBookings } from "@/actions/booking-actions";
 
 // Days for the timetable display
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -16,6 +17,13 @@ export default async function StudentDashboard() {
     const timeSlotsResult = await getTimeSlots();
     const timeSlots = timeSlotsResult.timeSlots || [];
     const hasTimetable = timeSlots.length > 0;
+
+    // Fetch bookings
+    const bookingsResult = await getMyBookings();
+    const bookings = bookingsResult.bookings || [];
+    const upcomingBookings = bookings.filter((b: any) =>
+        b.status === "PENDING" || b.status === "CONFIRMED"
+    );
 
     return (
         <div className="min-h-screen pt-24 px-4 max-w-7xl mx-auto pb-12">
@@ -38,7 +46,7 @@ export default async function StudentDashboard() {
                 {/* Quick Stats */}
                 <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="font-semibold text-gray-500 mb-2">Upcoming Sessions</h3>
-                    <p className="text-3xl font-bold text-giki-blue">0</p>
+                    <p className="text-3xl font-bold text-giki-blue">{upcomingBookings.length}</p>
                 </div>
                 <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
                     <h3 className="font-semibold text-gray-500 mb-2">Wallet Balance</h3>
@@ -135,6 +143,50 @@ export default async function StudentDashboard() {
                     </div>
                 )}
             </div>
+
+            {/* Upcoming Bookings Section */}
+            {upcomingBookings.length > 0 && (
+                <div className="mt-8 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100">
+                        <h2 className="text-xl font-bold text-green-800">Upcoming Sessions</h2>
+                        <p className="text-sm text-green-600">{upcomingBookings.length} session(s) scheduled</p>
+                    </div>
+                    <div className="p-4 space-y-3">
+                        {upcomingBookings.slice(0, 5).map((booking: any) => (
+                            <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-2 h-12 rounded-full ${booking.status === "CONFIRMED" ? "bg-green-500" : "bg-yellow-500"
+                                        }`} />
+                                    <div>
+                                        <p className="font-semibold text-gray-800">{booking.course}</p>
+                                        <p className="text-sm text-gray-600">
+                                            with {booking.mentor?.name || "Mentor"}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {new Date(booking.scheduledDate).toLocaleDateString("en-US", {
+                                                weekday: "long",
+                                                month: "short",
+                                                day: "numeric",
+                                            })} • {booking.startTime} - {booking.endTime}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${booking.status === "CONFIRMED"
+                                            ? "bg-green-100 text-green-700"
+                                            : "bg-yellow-100 text-yellow-700"
+                                        }`}>
+                                        {booking.status === "CONFIRMED" ? "Confirmed" : "Pending"}
+                                    </span>
+                                    <p className="text-sm font-bold text-gray-800 mt-2">
+                                        PKR {booking.totalAmount?.toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Find Mentors Section */}
             <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
