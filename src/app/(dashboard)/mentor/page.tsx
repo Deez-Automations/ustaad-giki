@@ -192,6 +192,38 @@ export default async function MentorDashboard() {
                         pendingPayments={pendingBookings.reduce((sum: number, b: any) => sum + (b.totalAmount || 0), 0)}
                     />
 
+                    {/* Upcoming Sessions List */}
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                        <h3 className="font-semibold text-gray-800 mb-4">📅 Upcoming Sessions</h3>
+                        {confirmedBookings.length > 0 ? (
+                            <div className="space-y-3">
+                                {confirmedBookings.slice(0, 5).map((booking: any) => (
+                                    <div key={booking.id} className="p-3 bg-gray-50 rounded-xl">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                                            <p className="font-semibold text-gray-800 text-sm">{booking.course}</p>
+                                        </div>
+                                        <p className="text-xs text-gray-600 mt-1">
+                                            with {booking.student?.name || "Student"}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {new Date(booking.scheduledDate).toLocaleDateString("en-US", {
+                                                weekday: "short",
+                                                month: "short",
+                                                day: "numeric",
+                                            })} • {booking.startTime} - {booking.endTime}
+                                        </p>
+                                        <p className="text-xs font-medium text-green-600 mt-1">
+                                            PKR {booking.totalAmount?.toLocaleString()}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-gray-500 text-sm text-center py-4">No upcoming sessions</p>
+                        )}
+                    </div>
+
                     {/* Quick Actions */}
                     <div className="bg-white rounded-2xl p-6 border border-gray-200">
                         <h3 className="font-semibold text-gray-800 mb-4">Quick Actions</h3>

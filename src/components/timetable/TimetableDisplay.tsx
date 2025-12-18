@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import React from "react";
 
 interface TimeSlot {
     id: string;
@@ -30,7 +31,6 @@ interface TimetableDisplayProps {
     timeSlots: TimeSlot[];
     confirmedBookings?: BookingEvent[];
     showAllDays?: boolean;
-    compact?: boolean;
 }
 
 const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -41,7 +41,6 @@ export default function TimetableDisplay({
     timeSlots,
     confirmedBookings = [],
     showAllDays = true,
-    compact = false
 }: TimetableDisplayProps) {
     const [selectedEvent, setSelectedEvent] = useState<(TimeSlot | BookingEvent) | null>(null);
 
@@ -71,132 +70,142 @@ export default function TimetableDisplay({
 
     // Check if this is the start of a slot
     const isSlotStart = (slot: TimeSlot, hour: string) => {
-        return slot.startTime.startsWith(hour.split(":")[0]);
+        const slotStartHour = slot.startTime.split(":")[0];
+        const checkHour = hour.split(":")[0];
+        return slotStartHour === checkHour;
     };
 
     const isBookingStart = (booking: BookingEvent, hour: string) => {
-        return booking.startTime.startsWith(hour.split(":")[0]);
+        const bookingStartHour = booking.startTime.split(":")[0];
+        const checkHour = hour.split(":")[0];
+        return bookingStartHour === checkHour;
     };
 
     return (
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             <div className="p-4 bg-gradient-to-r from-giki-blue to-blue-600">
                 <h3 className="text-lg font-bold text-white">📅 Weekly Schedule</h3>
-                <p className="text-blue-100 text-sm">Your classes and confirmed sessions</p>
+                <p className="text-blue-100 text-sm">
+                    {timeSlots.length} classes • {confirmedBookings.length} tutoring sessions
+                </p>
             </div>
 
             {/* Calendar Grid */}
             <div className="overflow-x-auto">
-                <div className={`grid ${showAllDays ? 'grid-cols-8' : 'grid-cols-6'} min-w-[700px]`}>
-                    {/* Header Row */}
-                    <div className="p-2 bg-gray-50 font-semibold text-gray-600 text-center text-xs border-r border-b border-gray-200">
-                        Time
-                    </div>
-                    {days.map(day => (
-                        <div key={day} className="p-2 bg-gray-50 font-semibold text-gray-700 text-center text-xs border-r last:border-r-0 border-b border-gray-200">
-                            {day.substring(0, 3)}
-                        </div>
-                    ))}
+                <table className="w-full min-w-[900px] border-collapse">
+                    <thead>
+                        <tr>
+                            <th className="p-3 bg-gray-50 font-semibold text-gray-600 text-center text-sm border-r border-b border-gray-200 w-20">
+                                Time
+                            </th>
+                            {days.map(day => (
+                                <th key={day} className="p-3 bg-gray-50 font-semibold text-gray-700 text-center text-sm border-r last:border-r-0 border-b border-gray-200">
+                                    {day.substring(0, 3)}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {HOURS.map(hour => (
+                            <tr key={hour}>
+                                <td className="p-2 text-sm font-mono text-gray-500 text-center border-r border-b border-gray-100 bg-gray-50 w-20">
+                                    {hour}
+                                </td>
+                                {days.map(day => {
+                                    const slot = getSlotAt(day, hour);
+                                    const booking = getBookingAt(day, hour);
+                                    const isStartSlot = slot && isSlotStart(slot, hour);
+                                    const isStartBooking = booking && isBookingStart(booking, hour);
 
-                    {/* Time Rows */}
-                    {HOURS.map(hour => (
-                        <>
-                            <div key={`time-${hour}`} className="p-2 text-xs font-mono text-gray-500 text-center border-r border-b border-gray-100 bg-gray-50">
-                                {hour}
-                            </div>
-                            {days.map(day => {
-                                const slot = getSlotAt(day, hour);
-                                const booking = getBookingAt(day, hour);
-                                const isStartSlot = slot && isSlotStart(slot, hour);
-                                const isStartBooking = booking && isBookingStart(booking, hour);
+                                    return (
+                                        <td
+                                            key={`${day}-${hour}`}
+                                            className="p-1 border-r last:border-r-0 border-b border-gray-100 h-14 relative align-top"
+                                        >
+                                            {/* Class/TimeSlot */}
+                                            {isStartSlot && slot && (
+                                                <div
+                                                    className="absolute inset-0 m-1 rounded-lg p-2 text-white cursor-pointer hover:opacity-90 transition-opacity z-10 overflow-hidden"
+                                                    style={{ backgroundColor: slot.color || "#3b82f6" }}
+                                                    onClick={() => setSelectedEvent(slot)}
+                                                >
+                                                    <div className="font-bold text-sm truncate">{slot.title}</div>
+                                                    {slot.location && (
+                                                        <div className="text-white/80 text-xs truncate">{slot.location}</div>
+                                                    )}
+                                                </div>
+                                            )}
 
-                                return (
-                                    <div
-                                        key={`${day}-${hour}`}
-                                        className={`p-1 border-r last:border-r-0 border-b border-gray-100 min-h-[${compact ? '40' : '50'}px] relative`}
-                                    >
-                                        {/* Class/TimeSlot */}
-                                        {isStartSlot && slot && (
-                                            <div
-                                                className="absolute inset-0 m-0.5 rounded p-1 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity z-10"
-                                                style={{ backgroundColor: slot.color || "#3b82f6" }}
-                                                onClick={() => setSelectedEvent(slot)}
-                                            >
-                                                <div className="font-semibold truncate">{slot.title}</div>
-                                                {!compact && slot.location && (
-                                                    <div className="text-white/70 truncate text-[10px]">{slot.location}</div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Confirmed Booking */}
-                                        {isStartBooking && booking && !slot && (
-                                            <div
-                                                className="absolute inset-0 m-0.5 rounded p-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity z-10"
-                                                onClick={() => setSelectedEvent(booking)}
-                                            >
-                                                <div className="font-semibold truncate">📚 {booking.course}</div>
-                                                {!compact && (
-                                                    <div className="text-white/80 truncate text-[10px]">
+                                            {/* Confirmed Booking - Show even if there's a slot conflict */}
+                                            {isStartBooking && booking && (
+                                                <div
+                                                    className={`absolute inset-0 m-1 rounded-lg p-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white cursor-pointer hover:opacity-90 transition-opacity z-20 overflow-hidden ${slot ? 'ring-2 ring-yellow-400' : ''}`}
+                                                    onClick={() => setSelectedEvent(booking)}
+                                                >
+                                                    <div className="font-bold text-sm truncate">📚 {booking.course}</div>
+                                                    <div className="text-white/90 text-xs truncate">
                                                         {booking.studentName || booking.mentorName}
                                                     </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </>
-                    ))}
-                </div>
+                                                </div>
+                                            )}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
 
             {/* Legend */}
-            <div className="p-3 bg-gray-50 border-t border-gray-200 flex gap-4 text-xs">
-                <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+            <div className="p-4 bg-gray-50 border-t border-gray-200 flex flex-wrap gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-blue-500"></div>
                     <span className="text-gray-600">Class</span>
                 </div>
-                <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-gradient-to-r from-green-500 to-emerald-500"></div>
+                <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-gradient-to-r from-green-500 to-emerald-500"></div>
                     <span className="text-gray-600">Tutoring Session</span>
                 </div>
+                {confirmedBookings.length === 0 && timeSlots.length === 0 && (
+                    <span className="text-gray-400 italic">No events to display</span>
+                )}
             </div>
 
             {/* Event Details Popup */}
             {selectedEvent && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedEvent(null)}>
                     <div
-                        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6"
+                        className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
                         onClick={e => e.stopPropagation()}
                     >
                         {'course' in selectedEvent ? (
                             // Booking details
                             <>
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-                                        <span className="text-white text-xl">📚</span>
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-2xl">📚</span>
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-gray-800">{selectedEvent.course}</h3>
+                                        <h3 className="text-xl font-bold text-gray-800">{selectedEvent.course}</h3>
                                         <p className="text-sm text-gray-500">Tutoring Session</p>
                                     </div>
                                 </div>
-                                <div className="space-y-2 text-sm">
+                                <div className="space-y-3 text-sm bg-gray-50 rounded-xl p-4">
                                     {selectedEvent.topic && (
-                                        <p><span className="font-medium text-gray-600">Topic:</span> {selectedEvent.topic}</p>
+                                        <p><span className="font-semibold text-gray-600">Topic:</span> {selectedEvent.topic}</p>
                                     )}
-                                    <p><span className="font-medium text-gray-600">Day:</span> {selectedEvent.day}</p>
-                                    <p><span className="font-medium text-gray-600">Time:</span> {selectedEvent.startTime} - {selectedEvent.endTime}</p>
+                                    <p><span className="font-semibold text-gray-600">Day:</span> {selectedEvent.day}</p>
+                                    <p><span className="font-semibold text-gray-600">Time:</span> {selectedEvent.startTime} - {selectedEvent.endTime}</p>
                                     {selectedEvent.studentName && (
-                                        <p><span className="font-medium text-gray-600">Student:</span> {selectedEvent.studentName}</p>
+                                        <p><span className="font-semibold text-gray-600">Student:</span> {selectedEvent.studentName}</p>
                                     )}
                                     {selectedEvent.mentorName && (
-                                        <p><span className="font-medium text-gray-600">Mentor:</span> {selectedEvent.mentorName}</p>
+                                        <p><span className="font-semibold text-gray-600">Mentor:</span> {selectedEvent.mentorName}</p>
                                     )}
                                     <p>
-                                        <span className="font-medium text-gray-600">Status:</span>{" "}
-                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
+                                        <span className="font-semibold text-gray-600">Status:</span>{" "}
+                                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                                             {selectedEvent.status}
                                         </span>
                                     </p>
@@ -205,30 +214,30 @@ export default function TimetableDisplay({
                         ) : (
                             // Class details
                             <>
-                                <div className="flex items-center gap-3 mb-4">
+                                <div className="flex items-center gap-4 mb-4">
                                     <div
-                                        className="w-12 h-12 rounded-full flex items-center justify-center"
+                                        className="w-14 h-14 rounded-full flex items-center justify-center"
                                         style={{ backgroundColor: selectedEvent.color }}
                                     >
-                                        <span className="text-white text-xl">📖</span>
+                                        <span className="text-white text-2xl">📖</span>
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-gray-800">{selectedEvent.title}</h3>
+                                        <h3 className="text-xl font-bold text-gray-800">{selectedEvent.title}</h3>
                                         <p className="text-sm text-gray-500">Class</p>
                                     </div>
                                 </div>
-                                <div className="space-y-2 text-sm">
-                                    <p><span className="font-medium text-gray-600">Day:</span> {selectedEvent.day}</p>
-                                    <p><span className="font-medium text-gray-600">Time:</span> {selectedEvent.startTime} - {selectedEvent.endTime}</p>
+                                <div className="space-y-3 text-sm bg-gray-50 rounded-xl p-4">
+                                    <p><span className="font-semibold text-gray-600">Day:</span> {selectedEvent.day}</p>
+                                    <p><span className="font-semibold text-gray-600">Time:</span> {selectedEvent.startTime} - {selectedEvent.endTime}</p>
                                     {selectedEvent.location && (
-                                        <p><span className="font-medium text-gray-600">Location:</span> {selectedEvent.location}</p>
+                                        <p><span className="font-semibold text-gray-600">Location:</span> {selectedEvent.location}</p>
                                     )}
                                 </div>
                             </>
                         )}
                         <button
                             onClick={() => setSelectedEvent(null)}
-                            className="w-full mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                            className="w-full mt-4 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
                         >
                             Close
                         </button>
