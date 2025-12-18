@@ -11,6 +11,12 @@ export default async function StudentDashboard() {
 
     if (!session) redirect("/auth/login");
 
+    // Redirect mentors to their dashboard
+    const userRole = (session.user as any)?.role;
+    if (userRole === "MENTOR") {
+        redirect("/mentor");
+    }
+
     const userId = session.user?.id as string;
 
     // Fetch time slots for the current user
