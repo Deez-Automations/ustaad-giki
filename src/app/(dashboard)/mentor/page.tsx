@@ -11,6 +11,7 @@ import EarningsCard from "@/components/mentor/EarningsCard";
 import ReviewsDisplay from "@/components/mentor/ReviewsDisplay";
 import ProfileCompletion from "@/components/mentor/ProfileCompletion";
 import PendingBookings from "@/components/booking/PendingBookings";
+import DeleteAccountButton from "@/components/account/DeleteAccountButton";
 
 export default async function MentorDashboard() {
     const session = await auth();
@@ -196,6 +197,17 @@ export default async function MentorDashboard() {
                 averageRating={profile.rating || 0}
                 totalReviews={profile.reviewCount || 0}
             />
+
+            {/* Danger Zone */}
+            <div className="mt-12 pt-8 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-semibold text-gray-800">Danger Zone</h3>
+                        <p className="text-sm text-gray-500">Permanently delete your account and all data</p>
+                    </div>
+                    <DeleteAccountButton />
+                </div>
+            </div>
         </div>
     );
 }

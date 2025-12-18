@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getTimeSlots } from "@/actions/timetable-actions";
 import { getMyBookings } from "@/actions/booking-actions";
+import DeleteAccountButton from "@/components/account/DeleteAccountButton";
 
 // Days for the timetable display
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -173,8 +174,8 @@ export default async function StudentDashboard() {
                                 </div>
                                 <div className="text-right">
                                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${booking.status === "CONFIRMED"
-                                            ? "bg-green-100 text-green-700"
-                                            : "bg-yellow-100 text-yellow-700"
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-yellow-100 text-yellow-700"
                                         }`}>
                                         {booking.status === "CONFIRMED" ? "Confirmed" : "Pending"}
                                     </span>
@@ -201,6 +202,17 @@ export default async function StudentDashboard() {
                     >
                         Browse Mentors
                     </Link>
+                </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="mt-12 pt-8 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-semibold text-gray-800">Danger Zone</h3>
+                        <p className="text-sm text-gray-500">Permanently delete your account and all data</p>
+                    </div>
+                    <DeleteAccountButton />
                 </div>
             </div>
         </div>

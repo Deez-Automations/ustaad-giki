@@ -9,6 +9,9 @@ import { NavbarMotion } from "./NavbarMotion";
 export default async function Navbar() {
     const session = await auth();
 
+    // Determine dashboard path based on user role
+    const dashboardPath = (session?.user as any)?.role === "MENTOR" ? "/mentor" : "/student";
+
     return (
         <NavbarMotion>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,7 +32,7 @@ export default async function Navbar() {
                         </div>
 
                         {session ? (
-                            <Link href="/student">
+                            <Link href={dashboardPath}>
                                 <Button className="bg-giki-blue hover:bg-giki-blue/90 text-white rounded-full px-6">
                                     Dashboard
                                 </Button>

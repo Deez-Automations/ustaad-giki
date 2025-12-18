@@ -239,10 +239,15 @@ export async function createBooking(data: {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return { error: "Unauthorized" };
+            return { error: "Unauthorized - please login" };
         }
 
         const studentId = session.user.id;
+
+        // Validate inputs
+        if (!data.mentorId || !data.course || !data.scheduledDate || !data.startTime || !data.endTime) {
+            return { error: "Missing required booking information" };
+        }
 
         // Get mentor's hourly rate
         const mentorProfile = await prisma.profile.findUnique({
@@ -250,15 +255,26 @@ export async function createBooking(data: {
         });
 
         if (!mentorProfile) {
-            return { error: "Mentor not found" };
+            return { error: "Mentor profile not found" };
         }
 
         // Calculate duration and amount
         const startMins = timeToMinutes(data.startTime);
         const endMins = timeToMinutes(data.endTime);
         const durationMinutes = endMins - startMins;
+
+        if (durationMinutes <= 0) {
+            return { error: "Invalid time range" };
+        }
+
         const hourlyRate = mentorProfile.hourlyRate || 500;
         const totalAmount = (durationMinutes / 60) * hourlyRate;
+
+        // Convert scheduledDate string to Date object
+        const scheduledDateObj = new Date(data.scheduledDate);
+        if (isNaN(scheduledDateObj.getTime())) {
+            return { error: "Invalid date format" };
+        }
 
         // Create booking
         const booking = await prisma.booking.create({
@@ -267,7 +283,7 @@ export async function createBooking(data: {
                 mentorId: data.mentorId,
                 course: data.course,
                 topic: data.topic || null,
-                scheduledDate: data.scheduledDate,
+                scheduledDate: scheduledDateObj,
                 startTime: data.startTime,
                 endTime: data.endTime,
                 duration: durationMinutes,
@@ -284,8 +300,8 @@ export async function createBooking(data: {
         return { success: true, bookingId: booking.id };
 
     } catch (error) {
-        console.error("[createBooking]", error);
-        return { error: "Failed to create booking" };
+        console.error("[createBooking] Error:", error);
+        return { error: "Failed to create booking. Please try again." };
     }
 }
 
