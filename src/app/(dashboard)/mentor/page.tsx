@@ -4,14 +4,15 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSOSAlertsForMentor } from "@/actions/sos-actions";
 import { getMyBookings } from "@/actions/booking-actions";
+import { getTimeSlots } from "@/actions/timetable-actions";
 import MentorSOSAlerts from "@/components/sos/MentorSOSAlerts";
 import MentorStats from "@/components/mentor/MentorStats";
-import ActiveSessions from "@/components/mentor/ActiveSessions";
 import EarningsCard from "@/components/mentor/EarningsCard";
 import ReviewsDisplay from "@/components/mentor/ReviewsDisplay";
 import ProfileCompletion from "@/components/mentor/ProfileCompletion";
 import PendingBookings from "@/components/booking/PendingBookings";
 import DeleteAccountButton from "@/components/account/DeleteAccountButton";
+import TimetableDisplay from "@/components/timetable/TimetableDisplay";
 
 export default async function MentorDashboard() {
     const session = await auth();
@@ -38,17 +39,27 @@ export default async function MentorDashboard() {
     const allBookings = bookingsResult.bookings || [];
     const pendingBookings = allBookings.filter((b: any) => b.status === "PENDING" && b.mentorId === userId);
     const confirmedBookings = allBookings.filter((b: any) => b.status === "CONFIRMED" && b.mentorId === userId);
-    const upcomingSessions = [...pendingBookings, ...confirmedBookings];
 
-    // Convert confirmed bookings to session format for ActiveSessions component
-    const sessionsForDisplay = confirmedBookings.map((b: any) => ({
-        id: b.id,
-        studentName: b.student?.name || "Student",
-        course: b.course,
-        startTime: `${b.scheduledDate} ${b.startTime}`,
-        duration: b.duration,
-        status: "upcoming" as const,
-    }));
+    // Fetch timetable
+    const timetableResult = await getTimeSlots();
+    const timeSlots = timetableResult.timeSlots || [];
+
+    // Convert confirmed bookings to timetable event format
+    const bookingEvents = confirmedBookings.map((b: any) => {
+        const scheduledDate = new Date(b.scheduledDate);
+        const dayName = scheduledDate.toLocaleDateString("en-US", { weekday: "long" });
+        return {
+            id: b.id,
+            day: dayName,
+            startTime: b.startTime,
+            endTime: b.endTime,
+            title: b.course,
+            studentName: b.student?.name || "Student",
+            status: b.status,
+            course: b.course,
+            topic: b.topic,
+        };
+    });
 
     // Fetch real reviews and transform to component format
     const rawReviews = await prisma.review.findMany({
@@ -89,6 +100,7 @@ export default async function MentorDashboard() {
     };
 
     const { percentage: completionPercentage, missing: missingFields } = calculateCompletion();
+    const isProfileComplete = completionPercentage === 100;
 
     return (
         <div className="min-h-screen pt-24 px-4 max-w-7xl mx-auto pb-12">
@@ -143,25 +155,41 @@ export default async function MentorDashboard() {
 
             {/* Main Content Grid */}
             <div className="grid lg:grid-cols-3 gap-6 mb-8">
-                {/* Left: Sessions & Earnings */}
+                {/* Left: Timetable (2/3 width) */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Active Sessions */}
-                    <ActiveSessions sessions={sessionsForDisplay} />
+                    {/* Weekly Timetable with Confirmed Bookings */}
+                    <TimetableDisplay
+                        timeSlots={timeSlots}
+                        confirmedBookings={bookingEvents}
+                        showAllDays={true}
+                    />
 
-                    {/* Earnings Breakdown */}
+                    {/* Edit Timetable Button */}
+                    <div className="text-center">
+                        <Link
+                            href="/timetable"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-giki-blue text-white rounded-lg font-medium hover:bg-opacity-90 transition-all"
+                        >
+                            📅 {timeSlots.length > 0 ? "Edit Timetable" : "Add Timetable"}
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Right: Earnings & Quick Actions (1/3 width) */}
+                <div className="space-y-6">
+                    {/* Show ProfileCompletion only if not 100% */}
+                    {!isProfileComplete && (
+                        <ProfileCompletion
+                            completionPercentage={completionPercentage}
+                            missingFields={missingFields}
+                        />
+                    )}
+
+                    {/* Earnings Overview (moves up when profile is complete) */}
                     <EarningsCard
                         totalEarnings={profile.totalEarnings || 0}
                         monthlyEarnings={0}
                         pendingPayments={pendingBookings.reduce((sum: number, b: any) => sum + (b.totalAmount || 0), 0)}
-                    />
-                </div>
-
-                {/* Right: Profile & Reviews */}
-                <div className="space-y-6">
-                    {/* Profile Completion */}
-                    <ProfileCompletion
-                        completionPercentage={completionPercentage}
-                        missingFields={missingFields}
                     />
 
                     {/* Quick Actions */}
