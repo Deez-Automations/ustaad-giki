@@ -140,6 +140,13 @@ export async function acceptSOSAlert(alertId: string) {
         }
 
         const userId = session.user.id as string;
+        const userRole = (session.user as any).role;
+
+        // SECURITY: Only mentors can accept SOS alerts
+        if (userRole !== "MENTOR") {
+            console.warn(`[SECURITY] Non-mentor ${userId} attempted to accept SOS alert`);
+            return { error: "Only mentors can accept SOS alerts" };
+        }
 
         // Check if alert is still pending
         const alert = await prisma.sOSAlert.findUnique({

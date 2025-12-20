@@ -3,6 +3,18 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+// Input validation schemas (SECURITY: Prevent injection attacks)
+const BookingInputSchema = z.object({
+    mentorId: z.string().min(1, "Mentor ID required").max(100),
+    course: z.string().min(1, "Course required").max(100),
+    topic: z.string().max(500).optional(),
+    scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format (HH:MM)"),
+    endTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format (HH:MM)"),
+    notes: z.string().max(1000).optional(),
+});
 
 // Time slot structure for availability calculations
 interface TimeRange {
@@ -244,14 +256,19 @@ export async function createBooking(data: {
 
         const studentId = session.user.id;
 
-        // Validate inputs
-        if (!data.mentorId || !data.course || !data.scheduledDate || !data.startTime || !data.endTime) {
-            return { error: "Missing required booking information" };
+        // SECURITY: Validate and sanitize inputs with Zod
+        const parseResult = BookingInputSchema.safeParse(data);
+        if (!parseResult.success) {
+            const flatErrors = parseResult.error.flatten();
+            const firstError = Object.values(flatErrors.fieldErrors)[0]?.[0] || "Invalid input";
+            console.warn("[SECURITY] Invalid booking input:", flatErrors);
+            return { error: firstError };
         }
+        const validData = parseResult.data;
 
         // Get mentor's hourly rate
         const mentorProfile = await prisma.profile.findUnique({
-            where: { userId: data.mentorId },
+            where: { userId: validData.mentorId },
         });
 
         if (!mentorProfile) {
@@ -259,8 +276,8 @@ export async function createBooking(data: {
         }
 
         // Calculate duration and amount
-        const startMins = timeToMinutes(data.startTime);
-        const endMins = timeToMinutes(data.endTime);
+        const startMins = timeToMinutes(validData.startTime);
+        const endMins = timeToMinutes(validData.endTime);
         const durationMinutes = endMins - startMins;
 
         if (durationMinutes <= 0) {
@@ -271,7 +288,7 @@ export async function createBooking(data: {
         const totalAmount = (durationMinutes / 60) * hourlyRate;
 
         // Convert scheduledDate string to Date object
-        const scheduledDateObj = new Date(data.scheduledDate);
+        const scheduledDateObj = new Date(validData.scheduledDate);
         if (isNaN(scheduledDateObj.getTime())) {
             return { error: "Invalid date format" };
         }
@@ -280,16 +297,16 @@ export async function createBooking(data: {
         const booking = await prisma.booking.create({
             data: {
                 studentId,
-                mentorId: data.mentorId,
-                course: data.course,
-                topic: data.topic || null,
+                mentorId: validData.mentorId,
+                course: validData.course,
+                topic: validData.topic || null,
                 scheduledDate: scheduledDateObj,
-                startTime: data.startTime,
-                endTime: data.endTime,
+                startTime: validData.startTime,
+                endTime: validData.endTime,
                 duration: durationMinutes,
                 totalAmount,
                 status: "PENDING",
-                studentNotes: data.notes || null,
+                studentNotes: validData.notes || null,
             },
         });
 
